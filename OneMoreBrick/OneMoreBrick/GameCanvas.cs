@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
 namespace OneMoreBrick {
     /// <summary>
-    /// Reponsibilities:
-    /// 1. Create and position nodes for each DiagramNode
-    /// 2. Drawing relations and force vectors
-    /// 3. Provide trigger for simulation
-    /// 4. Pass mouse events to Diagram
+    /// Responsible to draw all game elements on screen.
     /// </summary>
     public class GameCanvas : Canvas {
 
@@ -20,9 +18,9 @@ namespace OneMoreBrick {
         private DateTime previousTime;
 
         private GameViewModel gameViewModel;
+        private bool isMouseLeftButtonDown;
 
-        private Dictionary<UIElement, BallViewModel> control2model = new Dictionary<UIElement, BallViewModel>();
-
+        private readonly Pen whitePen = new Pen(new SolidColorBrush(Colors.White), 1);
 
         public GameCanvas() {
             Loaded += OnLoaded;
@@ -31,55 +29,26 @@ namespace OneMoreBrick {
 
         private void OnLoaded(object sender, EventArgs e) {
             CompositionTargetEx.FrameUpdating += OnCompositionTargetRendering;
+            gameViewModel.SetViewportSize(RenderSize);
         }
 
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e) {
-            gameViewModel = (GameViewModel)DataContext;
-            //
-            // Instead of using a binding to ItemsSource, we listen to the CollectionChanged event.
-            // So, this still has to happen in DiagramCanvas.
-            //
-            ((INotifyCollectionChanged)gameViewModel.BallViewModels).CollectionChanged += OnCollectionChanged;
-            InitNodes();
+            gameViewModel = (GameViewModel)DataContext;            
         }
 
-        private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
-            SyncNodes();
-        }
 
-        private void InitNodes() {
-            if (IsLoaded) {
-                SyncNodes();
-            } else {
-                Loaded += (sender, args) => SyncNodes();
-            }
-        }
-
-        private void SyncNodes() {
-            Children.Clear();
-            control2model.Clear();
-            foreach (var ballViewModel in gameViewModel.BallViewModels) {
-                AddNode(ballViewModel);
-            }
-        }
-
-        private void AddNode(BallViewModel ballViewModel) {
-            Ellipse e = new Ellipse() { Width = ballViewModel.Size.Width, Height = ballViewModel.Size.Height, Fill = Brushes.White };
-            control2model[e] = ballViewModel;
-            Children.Add(e);
-        }
 
         private void OnCompositionTargetRendering(object sender, EventArgs e) {
             //
             // Gebruik floats ipv doubles, veel sneller:
             // https://evanl.wordpress.com/category/graphics/
             //
-            foreach (var child in Children) {
-                var element = (UIElement)child;
-                var ballViewModel = control2model[element];
-                SetLeft(element, ballViewModel.TopLeft.X);
-                SetTop(element, ballViewModel.TopLeft.Y);
+            if(gameViewModel.State == State.PlacingTarget) {
+                MouseLeftButtonDown += OnMouseLeftButtonDown;
+                MouseMove += OnMouseMove;
+                MouseLeftButtonUp += OnMouseLeftButtonUp;
             }
+
             UpdateLayout();
             InvalidateVisual();
         }
@@ -93,6 +62,12 @@ namespace OneMoreBrick {
             }
             started = true;
             previousTime = now;
+
+            DrawBalls(dc);
+
+            if (isMouseLeftButtonDown) {
+                DrawShootingLine(dc);
+            }
         }
 
         private void SimulateStep(TimeSpan timeStep, DrawingContext dc) {
@@ -102,6 +77,40 @@ namespace OneMoreBrick {
                 ActualWidth,
                 ActualHeight
             );
+        }
+
+        private void DrawBalls(DrawingContext dc) {
+            foreach (var ballViewModel in gameViewModel.BallViewModels) {
+                dc.DrawEllipse(Brushes.White, null, ballViewModel.Pos, ballViewModel.Size.Width / 2, ballViewModel.Size.Height / 2);
+            }
+        }
+
+        private void DrawShootingLine(DrawingContext dc) {
+            dc.DrawLine(whitePen, gameViewModel.ShootingPoint, mousePosition);
+        }
+
+        Point mousePosition;
+
+        public void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+            var pos = e.GetPosition(this);
+            isMouseLeftButtonDown = true;
+            Mouse.Capture(this);
+        }
+
+        public void OnMouseMove(object sender, MouseEventArgs e) {
+            if (isMouseLeftButtonDown) {
+                mousePosition = e.GetPosition(this);
+            }
+        }
+
+        public void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
+            var pos = e.GetPosition(this);
+            isMouseLeftButtonDown = false;
+            gameViewModel.ShootAtTarget(e.GetPosition(this));
+            Mouse.Capture(null);
+            MouseLeftButtonDown -= OnMouseLeftButtonDown;
+            MouseMove -= OnMouseMove;
+            MouseLeftButtonUp -= OnMouseLeftButtonUp;
         }
 
         //private void DrawForces(DrawingContext dc) {
@@ -148,32 +157,6 @@ namespace OneMoreBrick {
         //    dc.DrawLine(pen, pos4, pos5);
         //    dc.DrawLine(pen, pos4, pos6);
         //}
-
-        //private bool isMouseLeftButtonDown;
         //private Point startDraggingPoint;
-
-        //public void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-        //    var pos = e.GetPosition(this);
-        //    startDraggingPoint = pos;
-        //    e.Handled = gameViewModel.UmlDiagramInteractor.HandleMouseLeftButtonDown(pos);
-        //    isMouseLeftButtonDown = true;
-        //    Mouse.Capture(this);
-        //}
-
-        //public void OnMouseMove(object sender, MouseEventArgs e) {
-        //    if (isMouseLeftButtonDown) {
-        //        var pos = e.GetPosition(this);
-        //        e.Handled = gameViewModel.UmlDiagramInteractor.HandleMouseMove(pos, startDraggingPoint);
-        //    }
-        //}
-
-        //public void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
-        //    var pos = e.GetPosition(this);
-        //    if (isMouseLeftButtonDown) {
-        //        e.Handled = gameViewModel.UmlDiagramInteractor.HandleMouseLeftButtonUp(pos);
-        //        isMouseLeftButtonDown = false;
-        //    }
-        //    Mouse.Capture(null);
-        //}
     }
 }

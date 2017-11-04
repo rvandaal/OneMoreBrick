@@ -8,6 +8,11 @@ using System.Windows;
 namespace OneMoreBrick {
     class BallViewModel : ViewModelBase {
 
+        public BallViewModel(Point startpos, Vector startvel) {
+            Pos = startpos;
+            Vel = startvel;
+        }
+
         private Vector vel;
         public Vector Vel {
             get { return vel; }
