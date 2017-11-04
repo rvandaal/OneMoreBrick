@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OneMoreBrick"
         mc:Ignorable="d"
-        Title="One more brick" Height="350" Width="525">
+        Title="One more brick" Height="400" Width="400" WindowStartupLocation="CenterScreen">
     <Grid>
-        
+        <local:GameCanvas Background="Purple"></local:GameCanvas>
     </Grid>
 </Window>
