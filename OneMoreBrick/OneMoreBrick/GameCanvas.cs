@@ -21,6 +21,7 @@ namespace OneMoreBrick {
         private bool isMouseLeftButtonDown;
 
         private readonly Pen whitePen = new Pen(new SolidColorBrush(Colors.White), 1);
+        private readonly Pen blackPen = new Pen(new SolidColorBrush(Colors.Black), 1);
 
         public GameCanvas() {
             Loaded += OnLoaded;
@@ -63,6 +64,7 @@ namespace OneMoreBrick {
             started = true;
             previousTime = now;
 
+            DrawBricks(dc);
             DrawBalls(dc);
 
             if (isMouseLeftButtonDown) {
@@ -77,6 +79,12 @@ namespace OneMoreBrick {
                 ActualWidth,
                 ActualHeight
             );
+        }
+
+        private void DrawBricks(DrawingContext dc) {
+            foreach (var brickViewModel in gameViewModel.BrickViewModels) {
+                dc.DrawRectangle(Brushes.Red, blackPen, new Rect(brickViewModel.TopLeft, brickViewModel.BottomRight));
+            }
         }
 
         private void DrawBalls(DrawingContext dc) {
