@@ -57,6 +57,7 @@
     <Compile Include="BallViewModel.cs" />
     <Compile Include="BrickViewModel.cs" />
     <Compile Include="DoubleUtility.cs" />
+    <Compile Include="Utilities.cs" />
     <Compile Include="ViewModelBase.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

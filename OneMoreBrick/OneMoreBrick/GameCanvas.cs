@@ -31,6 +31,7 @@ namespace OneMoreBrick {
         private void OnLoaded(object sender, EventArgs e) {
             CompositionTargetEx.FrameUpdating += OnCompositionTargetRendering;
             gameViewModel.SetViewportSize(RenderSize);
+            SizeChanged += (s, e1) => gameViewModel.SetViewportSize(RenderSize);
         }
 
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e) {
@@ -84,6 +85,7 @@ namespace OneMoreBrick {
         private void DrawBricks(DrawingContext dc) {
             foreach (var brickViewModel in gameViewModel.BrickViewModels) {
                 dc.DrawRectangle(Brushes.Red, blackPen, new Rect(brickViewModel.TopLeft, brickViewModel.BottomRight));
+                dc.DrawText(Utilities.GetFormattedText(brickViewModel.NumberOfHitsNecessary.ToString()), brickViewModel.Pos - new Vector(6, 6));
             }
         }
 
@@ -100,8 +102,8 @@ namespace OneMoreBrick {
         Point mousePosition;
 
         public void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-            var pos = e.GetPosition(this);
             isMouseLeftButtonDown = true;
+            mousePosition = e.GetPosition(this);
             Mouse.Capture(this);
         }
 

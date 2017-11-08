@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using System.Windows;
 
 namespace OneMoreBrick {
     class BrickViewModel : ViewModelBase {
 
-        public BrickViewModel() {
+        public int NumberOfHitsNecessary { get; set; }
 
+        public BrickViewModel(double x, double y, int numberOfHitsNecessary) {
+            Pos = new Point(x, y);
+            if(numberOfHitsNecessary == 0) {
+                Debugger.Break();
+            }
+            NumberOfHitsNecessary = numberOfHitsNecessary;
         }
 
         private Point pos;
@@ -23,8 +25,8 @@ namespace OneMoreBrick {
             }
         }
 
-        private Size size = new Size(30, 30);
-        public Size Size {
+        private static Size size = new Size(30, 30);
+        public static Size Size {
             get {
                 return size;
             }
